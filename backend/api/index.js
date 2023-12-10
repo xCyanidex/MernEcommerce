@@ -18,7 +18,9 @@ mongoose.connect(process.env.MONGO)
 })
 
 const app=express();
-app.use(cors());
+app.use(cors({
+    credentials: true
+}));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -30,7 +32,8 @@ app.listen(3000,()=>{
 
 app.use('/api/user',userRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/admin',adminRoutes)
+app.use('/api/admin',adminRoutes);
+
 
 
 

@@ -21,9 +21,10 @@ import { ToastContainer, toast } from "react-toastify";
 import axios from "axios";
 import "react-toastify/dist/ReactToastify.css";
 import logo from "../assets/pf-logo.png";
-import BgDiv from "@/components/BgDiv";
+import {useAuthStore} from "../store/store.js" 
 
 const SignIn = () => {
+    const setUser = useAuthStore((state) => state.setUser);
     const navigate=useNavigate();
     const notify = () => toast("Please Login First");
 
@@ -52,17 +53,19 @@ const SignIn = () => {
       },)
       .then((response) => {
         console.log(response);
-        const resMessage = response.data.toString();
-        toast.success(resMessage);
+        const resMessage = response.status.toString();
+        if (resMessage=='200'){
+          setUser(response.data);
+          console.log(response);
+navigate("/dashboard");
+        } 
       })
       .catch((error) => {
         console.log(error.response);
-        //  const errorMessage = error.response.data.toString();
-        //  toast.error(errorMessage);
       });
   }
   return (
-    <BgDiv>
+    <>
       <div className="container max-w-xl ">
         <img height="50" src={logo} alt="logo" />
         <Form {...form}>
@@ -95,7 +98,10 @@ const SignIn = () => {
             />
             <div className="text-center">
               <p>
-                Don't have an account? Sign up <Link className=" underline text-blue-500" to="/sign-up">here</Link>
+                Don't have an account? Sign up{" "}
+                <Link className=" underline text-blue-500" to="/sign-up">
+                  here
+                </Link>
               </p>
             </div>
             <div className="flex justify-center items-center">
@@ -105,7 +111,7 @@ const SignIn = () => {
         </Form>
       </div>
       <ToastContainer />
-    </BgDiv>
+    </>
   );
 };
 
