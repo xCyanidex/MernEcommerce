@@ -12,7 +12,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useNavigate,Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 import { Input } from "@/components/ui/input";
 import { SignIpformSchema } from "@/lib/validations";
@@ -21,19 +21,18 @@ import { ToastContainer, toast } from "react-toastify";
 import axios from "axios";
 import "react-toastify/dist/ReactToastify.css";
 import logo from "../assets/pf-logo.png";
-import {useAuthStore} from "../store/store.js" 
+import { useAuthStore } from "../store/store.js";
 
 const SignIn = () => {
-    const setUser = useAuthStore((state) => state.setUser);
-    const navigate=useNavigate();
-    const notify = () => toast("Please Login First");
+  const setUser = useAuthStore((state) => state.setUser);
+  const navigate = useNavigate();
+  const notify = () => toast("Please Login First");
 
-    const { loggedin } = useParams()
-    if (loggedin){
+  const { loggedin } = useParams();
+  if (loggedin) {
     notify;
-    console.log(loggedin)
-    } 
-
+    console.log(loggedin);
+  }
 
   const form = useForm<z.infer<typeof SignIpformSchema>>({
     resolver: zodResolver(SignIpformSchema),
@@ -50,15 +49,13 @@ const SignIn = () => {
       .post("http://localhost:3000/api/auth/signin", {
         email,
         password,
-      },)
+      })
       .then((response) => {
-        console.log(response);
         const resMessage = response.status.toString();
-        if (resMessage=='200'){
-          setUser(response.data);
-          console.log(response);
-navigate("/dashboard");
-        } 
+        if (resMessage == "200") {
+          setUser(response.data.token);
+          navigate("/dashboard");
+        }
       })
       .catch((error) => {
         console.log(error.response);

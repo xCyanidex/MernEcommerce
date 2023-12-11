@@ -4,9 +4,11 @@ import dotenv from 'dotenv';
 import userRoutes from "./routes/user.route.js"
 import authRoutes from "./routes/auth.route.js"
 import adminRoutes from "./routes/admin.route.js"
+import productRoutes from "./routes/product.route.js"
 import cors from "cors";
 import cookieParser from 'cookie-parser'
-import {  isLoggedIn } from './controllers/user.controller.js';
+import bodyParser from 'body-parser';
+
 dotenv.config();
 
 mongoose.connect(process.env.MONGO)
@@ -23,7 +25,9 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
-
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
 
 
 app.listen(3000,()=>{
@@ -33,6 +37,7 @@ app.listen(3000,()=>{
 app.use('/api/user',userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin',adminRoutes);
+app.use('/api/products', productRoutes );
 
 
 

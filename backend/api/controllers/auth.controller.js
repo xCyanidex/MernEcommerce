@@ -1,99 +1,59 @@
-import User from "../models/user.model.js";
 import bcryptjs from 'bcryptjs'
-import { errorHandler } from "../utils/error.js";
 import jwt from 'jsonwebtoken'
+import User from "../models/user.model.js";
+import { createSecretToken } from '../utils/SecretToken.js';
+
+
 export const signup = async (req, res, next) => {
     const { username, email, password } = req.body;
-
     try {
         const existingUser = await User.findOne({ email });
         if (existingUser) {
-            return res.send("Email is already registered.")
+            return res.status(400).json({ message: "Email is already registered." })
         }
-    } catch (error) {
-        res.status(500).send('Internal Server Error');
-    }
+        const hashedPassword = bcryptjs.hashSync(password, 10)
+        const newUser = new User({ username, email, password: hashedPassword });
 
+        const result = await newUser.save();
 
-    const hashedPassword = bcryptjs.hashSync(password, 10)
-    const newUser = new User({ username, email, password: hashedPassword });
-    try {
-        await newUser.save();
-        res.status(201).json({ message: "User created Successfully" })
+        // const token = createSecretToken(newUser._id, newUser.email)
+        const token =jwt.sign({ id: existingUser._id, email: existingUser.email }, process.env.JWT_SECRET);
+
+        res.cookie("token", token, {
+            withCredentials: true,
+            httpOnly: false,
+        });
+        res.status(200).json({ result, token, message: "User created Successfully" })
+
     } catch (error) {
-        next(error);
+        res.status(500).json({ message: "Something went wrong." })
     }
 }
 
 
-export const signin = async (req, res, next) => {
+export const signin = async (req, res) => {
     const { email, password } = req.body;
-
     try {
         const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            const pass = bcryptjs.compareSync(password, existingUser.password);
-            if (!pass) return errorHandler(401, 'Wrong Credentials')
-            const token = jwt.sign({ id: existingUser._id }, process.env.JWT_SECRET);
-            const {password:hashedPassword,...rest}=existingUser._doc;
-            const expiryDate=new Date(Date.now()+3600000);
-            console.log(token);
-            res.cookie('access_token', token, { expires: expiryDate, samesite: "lax", secure: false, domain: 'localhost:3000', path: '/api/auth/rolechecker' }).status(200).json(rest)
-        } else {
-            return next(errorHandler(404, 'User not found'));
-        }
-    } catch(error) {
-        next(error);
-    }
-}
+        if (!existingUser) { return res.status(404).json({ message: "User doesn't exist." }) }
+        const isPasswordCorrect = bcryptjs.compareSync(password, existingUser.password)
+        if (!isPasswordCorrect) return res.status(400).json({ message: "Invalid Credentials." })
 
+        const token =jwt.sign({ id: existingUser._id, email: existingUser.email }, process.env.JWT_SECRET);
+        // const token = createSecretToken(newUser._id, newUser.email)
+        const { password: hashedPassword, ...rest } = existingUser._doc;
+        const expiryDate = new Date(Date.now() + 3600000);
+        res.cookie("token", token, {
+            withCredentials: true,
+            httpOnly: false,
+        });
+        res.status(200).json({ token, rest, message: "User Successfully Logged In" })
 
-export const jwtAuth= async (req,res,next)=>{
-
-    try {
-        const token = req.cookies.accesstoken;
-        const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-        const userId = decodedToken.id;
-        const existingUser = await User.findOne({ _id: userId });
-        if (!existingUser) { next(errorHandler(400, "User is not Logged in")) }
     } catch (error) {
-        next(error)
+        res.status(500).json({ message: "Something went wrong." })
     }
-   
- 
 }
 
-
-export const isAdminChecker= async(req,res,next)=>{
-    try {
-        const token = req.cookies.accesstoken;
-        const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-        const userId = decodedToken.id;
-        const existingUser = await User.findOne({ _id: userId });
-        if (!existingUser.role=='admin') { return errorHandler(400, "User not authorized") }
-    } catch (error) {
-        return errorHandler(500,"Internal Server Error");
-    }
-    next();
-}
-
-
-export const roleChecker = async (req, res, next) => {
-    try {
-        // console.log(req.cookies)
-        const token = req.cookies.accesstoken;
-        const decodedToken =jwt.verify(token, process.env.JWT_SECRET);
-        const userId = decodedToken.id;
-        const existingUser = await User.findOne({ _id: userId });
-        if (!existingUser) { return errorHandler(400, "User not authorized") }else{
-            res.send(existingUser.role);
-            next();
-        }
-    } catch (error) {
-        return errorHandler(500, "Internal Server Error");
-    }
-  
-}
 
 
 

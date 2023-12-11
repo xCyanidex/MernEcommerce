@@ -1,13 +1,12 @@
 import express from 'express';
-import { roleChecker, signin, signup } from '../controllers/auth.controller.js';
-import cookieChecker from '../middlewares/cookieChecker.js';
+import { signin, signup } from '../controllers/auth.controller.js';
 
 
 const router=express.Router();
 
 
 router.post("/signup",signup);
-router.post("/signin", signin, cookieChecker);
-router.get("/rolechecker",cookieChecker,roleChecker)
+router.post("/signin", signin);
+
 
 export default router;
